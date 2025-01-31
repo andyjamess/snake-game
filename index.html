@@ -70,6 +70,19 @@
     </style>
 </head>
 <body>
+    <div class="difficulty-select">
+        难度：
+        <select id="difficulty" onchange="changeDifficulty()">
+            <option value="easy">简单</option>
+            <option value="normal" selected>普通</option>
+            <option value="hard">困难</option>
+        </select>
+    </div>
+    <div class="stats">
+        <div>最高分: <span id="highScore">0</span></div>
+        <div>当前分数: <span id="score">0</span></div>
+        <div id="powerup" class="powerup" style="display: none;"></div>
+    </div>
     <div class="score-board">
         分数: <span id="score">0</span>
     </div>
@@ -99,23 +112,32 @@
         let score = 0;
         let gameLoop;
         let isPaused = false;
+        let gameSpeed = 100;
+        let specialFood = null;
+        let powerupActive = false;
+        let highScore = 0;
 
-        function initGame() {
-            snake = [
-                { x: 5 * gridSize, y: 5 * gridSize }
-            ];
-            generateFood();
-            score = 0;
-            updateScore();
-            dx = gridSize;
-            dy = 0;
+        function changeDifficulty() {
+            const difficulty = document.getElementById('difficulty').value;
+            switch(difficulty) {
+                case 'easy': gameSpeed = 120; break;
+                case 'normal': gameSpeed = 100; break;
+                case 'hard': gameSpeed = 70; break;
+            }
+            if (gameLoop) {
+                clearInterval(gameLoop);
+                startGame();
+            }
         }
 
-        function generateFood() {
-            food = {
-                x: Math.floor(Math.random() * tileCount) * gridSize,
-                y: Math.floor(Math.random() * tileCount) * gridSize
-            };
+        function generateSpecialFood() {
+            if (Math.random() < 0.1 && !specialFood) {  // 10%概率生成特殊食物
+                specialFood = {
+                    x: Math.floor(Math.random() * tileCount) * gridSize,
+                    y: Math.floor(Math.random() * tileCount) * gridSize,
+                    type: Math.random() < 0.5 ? 'speed' : 'points'
+                };
+            }
         }
 
         function drawGame() {
@@ -167,11 +189,10 @@
         function updateScore() {
             document.getElementById('score').textContent = score;
             document.getElementById('finalScore').textContent = score;
-        }
-
-        function gameOver() {
-            clearInterval(gameLoop);
-            document.getElementById('gameOver').style.display = 'block';
+            if (score > highScore) {
+                highScore = score;
+                document.getElementById('highScore').textContent = highScore;
+            }
         }
 
         function startGame() {
@@ -184,6 +205,7 @@
                     drawGame();
                 }
             }, 100);
+            setInterval(generateSpecialFood, 5000);  // 每5秒尝试生成特殊食物
         }
 
         function pauseGame() {
